@@ -431,12 +431,49 @@ function renderLista(registros) {
               </figure>`).join('')}
           </div>
         </div>` : ''}
+        <div class="record-actions">
+          <button class="btn-delete-registro" data-id="${r.id}">🗑️ Excluir este registro</button>
+        </div>
       </div>
     </details>`;
   }).join('');
 
   $('listaBox').style.display = 'block';
 }
+
+// ---------- excluir registro ----------
+$('listaRegistros').addEventListener('click', async (ev) => {
+  const btn = ev.target.closest('.btn-delete-registro');
+  if (!btn) return;
+
+  const id = btn.dataset.id;
+  const confirmado = confirm('Tem certeza que quer excluir esse registro? Essa ação não pode ser desfeita.');
+  if (!confirmado) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Excluindo…';
+
+  try {
+    const { error } = await supabaseClient.from('fechamentos').delete().eq('id', id);
+    if (error) throw error;
+
+    const card = btn.closest('.record-card');
+    card.style.opacity = '0';
+    setTimeout(() => {
+      card.remove();
+      if ($('listaRegistros').children.length === 0) {
+        $('listaRegistros').innerHTML = '<div class="hint">Nenhum registro encontrado nesse período.</div>';
+      }
+    }, 200);
+
+    setStatusRelatorio('✅ Registro excluído.', 'success');
+  } catch (err) {
+    console.error(err);
+    alert('Erro ao excluir: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = '🗑️ Excluir este registro';
+  }
+});
 
 // ---------- start ----------
 goToStep(1);
