@@ -2,6 +2,7 @@
 -- El Loco — Fechamento do bar
 -- Rode isso no Supabase: painel do projeto > SQL Editor > New query
 -- Cole tudo e clique em RUN
+-- (versão corrigida — não dá mais erro se rodar mais de uma vez)
 -- ============================================================
 
 -- 1) Tabela principal
@@ -42,9 +43,11 @@ alter table fechamentos enable row level security;
 -- liberamos leitura e escrita pra quem tem a "anon key" (a chave pública do seu app).
 -- Isso é seguro pro seu caso de uso (ferramenta interna do bar), mas lembre:
 -- qualquer pessoa com a URL do app consegue ler/escrever nessa tabela.
+drop policy if exists "permitir leitura anon" on fechamentos;
 create policy "permitir leitura anon" on fechamentos
   for select using (true);
 
+drop policy if exists "permitir insercao anon" on fechamentos;
 create policy "permitir insercao anon" on fechamentos
   for insert with check (true);
 
@@ -59,10 +62,12 @@ create policy "permitir insercao anon" on fechamentos
 -- (troque 'fotos-fechamento' se você usar outro nome de bucket)
 -- ============================================================
 
+drop policy if exists "permitir upload anon fotos" on storage.objects;
 create policy "permitir upload anon fotos"
 on storage.objects for insert
 with check (bucket_id = 'fotos-fechamento');
 
+drop policy if exists "permitir leitura publica fotos" on storage.objects;
 create policy "permitir leitura publica fotos"
 on storage.objects for select
 using (bucket_id = 'fotos-fechamento');
