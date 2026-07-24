@@ -1,5 +1,20 @@
 function $(id) { return document.getElementById(id); }
 
+// ---------- tema claro/escuro ----------
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = $('themeToggle');
+  if (btn) btn.textContent = theme === 'light' ? '🌙' : '☀️';
+  try { localStorage.setItem('bar-theme', theme); } catch (e) {}
+}
+let temaSalvo = 'dark';
+try { temaSalvo = localStorage.getItem('bar-theme') || 'dark'; } catch (e) {}
+applyTheme(temaSalvo);
+$('themeToggle').addEventListener('click', () => {
+  const atual = document.documentElement.getAttribute('data-theme');
+  applyTheme(atual === 'light' ? 'dark' : 'light');
+});
+
 function todayISO() {
   const d = new Date();
   return d.toISOString().slice(0, 10);

@@ -8,6 +8,7 @@
   --void:      #120d0a;   /* fundo — espresso quase preto */
   --panel:     #1c150e;   /* cartões */
   --panel-2:   #251b12;   /* campos de input, mais "encaixados" */
+  --panel-deep: #1a130c;  /* base do degradê dos cartões */
   --rule:      #3c2c1d;   /* bordas / linhas */
   --rule-soft: #2c2116;
 
@@ -18,12 +19,43 @@
   --agave:      #a7bd45;  /* casca de limão — sucesso / acento secundário */
   --agave-2:    #c3d16f;
 
-  --paper: #f2ead4;   /* papel de comanda */
+  --paper: #f2ead4;   /* papel de comanda — usado como "tinta" sobre fundo escuro */
   --bone:  #efe4cf;   /* texto principal */
   --smoke: #ac9d84;   /* texto secundário */
 
   --neon: #c3574a;    /* alerta — como o letreiro vermelho da porta */
   --neon-soft: #dc7a6a;
+
+  --grain: rgba(255,255,255,0.06);
+  --glow-1: rgba(201, 138, 79, 0.16);
+  --glow-2: rgba(167, 189, 69, 0.07);
+}
+
+:root[data-theme="light"] {
+  --void:      #f3ecdd;   /* fundo — papel de comanda à luz do dia */
+  --panel:     #fffcf5;
+  --panel-2:   #f2e8d3;
+  --panel-deep: #ece0c7;
+  --rule:      #d9c7a4;
+  --rule-soft: #e6d8b9;
+
+  --brass:        #b06f36;
+  --brass-bright:  #c8874e;
+  --brass-dim:     #8a5c34;
+
+  --agave:      #6f8a2a;
+  --agave-2:    #55701d;
+
+  --paper: #3a2c1e;
+  --bone:  #2c2116;
+  --smoke: #8a7a61;
+
+  --neon: #a8412f;
+  --neon-soft: #8a2e22;
+
+  --grain: rgba(0,0,0,0.035);
+  --glow-1: rgba(201, 138, 79, 0.14);
+  --glow-2: rgba(111, 138, 42, 0.08);
 }
 
 * { box-sizing: border-box; }
@@ -42,11 +74,12 @@ body {
   flex-direction: column;
   align-items: center;
   padding: 32px 14px 70px;
+  transition: background-color 0.3s, color 0.3s;
 
   background-color: var(--void);
   background-image:
-    radial-gradient(ellipse 900px 620px at 50% -10%, rgba(201, 138, 79, 0.16), transparent 60%),
-    radial-gradient(ellipse 700px 500px at 100% 110%, rgba(167, 189, 69, 0.07), transparent 60%);
+    radial-gradient(ellipse 900px 620px at 50% -10%, var(--glow-1), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 110%, var(--glow-2), transparent 60%);
   background-attachment: fixed;
 }
 
@@ -55,11 +88,10 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.05;
   mix-blend-mode: overlay;
   background-image:
-    repeating-linear-gradient(0deg, #fff 0px, transparent 1px, transparent 2px),
-    repeating-linear-gradient(90deg, #fff 0px, transparent 1px, transparent 2px);
+    repeating-linear-gradient(0deg, var(--grain) 0px, transparent 1px, transparent 2px),
+    repeating-linear-gradient(90deg, var(--grain) 0px, transparent 1px, transparent 2px);
   background-size: 3px 3px;
   z-index: 0;
 }
@@ -133,7 +165,7 @@ body::before {
 }
 
 .section {
-  background: linear-gradient(180deg, var(--panel), var(--panel) 60%, #1a130c);
+  background: linear-gradient(180deg, var(--panel), var(--panel) 60%, var(--panel-deep));
   border: 1px solid var(--rule);
   border-radius: 14px;
   padding: 18px 18px 16px;
@@ -142,6 +174,7 @@ body::before {
     0 1px 0 rgba(255,255,255,0.03) inset,
     0 14px 30px -18px rgba(0,0,0,0.7);
   position: relative;
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .section-head {
@@ -488,7 +521,7 @@ textarea { resize: vertical; min-height: 58px; line-height: 1.5; }
    Ficha de fechamento (relatório) — cada registro como um documento
    ================================================================ */
 .record-card {
-  background: linear-gradient(180deg, var(--panel-2), #1e150e);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel-deep));
   border: 1px solid var(--rule);
   border-left: 3px solid var(--rule);
   border-radius: 10px;
@@ -654,3 +687,26 @@ textarea { resize: vertical; min-height: 58px; line-height: 1.5; }
   outline: 2px solid var(--brass-bright);
   outline-offset: 2px;
 }
+
+/* ---------- Alternador de tema ---------- */
+.theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: var(--panel-2);
+  color: var(--bone);
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 6px 16px -6px rgba(0,0,0,0.5);
+  transition: transform 0.15s, background 0.3s, border-color 0.3s;
+}
+.theme-toggle:hover { border-color: var(--brass); }
+.theme-toggle:active { transform: scale(0.92); }
