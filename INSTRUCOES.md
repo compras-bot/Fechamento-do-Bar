@@ -48,3 +48,12 @@ Não é necessário configurar variáveis de ambiente na Vercel, porque as chave
 
 ## Observação de segurança
 Como o app não tem login, qualquer pessoa com o link do site consegue ler e enviar registros (as políticas do `schema.sql` liberam isso pra chave anônima). Pra um app interno de uso da equipe do bar isso costuma ser aceitável, mas se quiser travar mais no futuro dá pra adicionar autenticação simples (Supabase Auth) e trocar as políticas de RLS pra exigir usuário logado.
+
+## Novidades desta versão
+1. **Múltiplas fotos por seção** — em Quebras, Desperdício (produtos/insumos), Limpeza e Fechamento agora dá pra anexar mais de uma foto (câmera ou galeria), com miniaturas e botão de remover cada uma.
+   - **Ação necessária no banco:** rode de novo o `schema.sql` no SQL Editor do Supabase — ele agora cria 5 colunas novas (`foto_..._urls`, do tipo array de texto) usando `alter table ... add column if not exists`, então é seguro rodar em cima do banco que você já tem. As colunas antigas (`foto_..._url`) continuam existindo, só não são mais preenchidas em registros novos; o app já sabe ler as duas (`urlsOf()` no `script.js`).
+2. **Indicadores tipo semáforo** — na aba "Relatório de fechamento", depois de buscar um período, aparece um painel 🚦 com uma bolinha por dia:
+   - 🟢 verde = fechamento normal
+   - 🟡 amarelo = teve quebra ou desperdício
+   - 🔴 vermelho = teve "Problema" relatado ou a palavra "acabou" no estoque crítico
+3. **Exportar por período** — na mesma aba, depois de buscar, aparecem os botões **📄 Exportar PDF** e **📊 Exportar Excel**, que exportam exatamente os registros do período buscado. Isso usa duas bibliotecas carregadas via CDN (`jsPDF` e `SheetJS`) — sem precisar de nenhuma configuração extra pro deploy na Vercel.

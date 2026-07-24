@@ -71,3 +71,17 @@ drop policy if exists "permitir leitura publica fotos" on storage.objects;
 create policy "permitir leitura publica fotos"
 on storage.objects for select
 using (bucket_id = 'fotos-fechamento');
+
+-- ============================================================
+-- 5) Múltiplas fotos por seção
+-- Antes cada seção guardava só 1 URL (foto_quebras_url etc).
+-- Agora guardamos uma LISTA de URLs por seção (o app já manda várias fotos).
+-- As colunas antigas (*_url) continuam existindo por compatibilidade com
+-- registros antigos, só não são mais usadas em registros novos.
+-- Rode este bloco mesmo se a tabela já existir — é seguro rodar de novo.
+-- ============================================================
+alter table fechamentos add column if not exists foto_quebras_urls text[] default '{}';
+alter table fechamentos add column if not exists foto_desp_produtos_urls text[] default '{}';
+alter table fechamentos add column if not exists foto_desp_insumos_urls text[] default '{}';
+alter table fechamentos add column if not exists foto_limpeza_urls text[] default '{}';
+alter table fechamentos add column if not exists foto_fechamento_urls text[] default '{}';

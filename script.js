@@ -30,11 +30,12 @@ const TOTAL_STEPS = 13;
 let currentStep = 1;
 let responsavelSelecionado = null;
 let limpezaFora = null; // null | true | false
-let fotoQuebrasFile = null;
-let fotoLimpezaFile = null;
-let fotoDespProdutosFile = null;
-let fotoDespInsumosFile = null;
-let fotoFechamentoFile = null;
+let fotoQuebrasFiles = [];
+let fotoLimpezaFiles = [];
+let fotoDespProdutosFiles = [];
+let fotoDespInsumosFiles = [];
+let fotoFechamentoFiles = [];
+let ultimaBusca = null; // { registros, de, ate } — usado pra exportar PDF/Excel
 
 const STEP_TITLES = {
   1: 'Identificação', 2: '1 — Movimento', 3: '2 — Quebras', 4: '3 — Desperdício produtos',
@@ -80,21 +81,50 @@ $('semFotoFechamento').addEventListener('change', () => {
   hideError('errFechamento');
 });
 
-$('fotoQuebras').addEventListener('change', (ev) => handlePhoto(ev, 'previewQuebras', (f) => { fotoQuebrasFile = f; hideError('errQuebras'); }));
-$('fotoLimpeza').addEventListener('change', (ev) => handlePhoto(ev, 'previewLimpeza', (f) => { fotoLimpezaFile = f; hideError('errLimpeza'); }));
-$('fotoDespProdutos').addEventListener('change', (ev) => handlePhoto(ev, 'previewDespProdutos', (f) => { fotoDespProdutosFile = f; hideError('errDespProdutos'); }));
-$('fotoDespInsumos').addEventListener('change', (ev) => handlePhoto(ev, 'previewDespInsumos', (f) => { fotoDespInsumosFile = f; hideError('errDespInsumos'); }));
-$('fotoFechamento').addEventListener('change', (ev) => handlePhoto(ev, 'previewFechamento', (f) => { fotoFechamentoFile = f; hideError('errFechamento'); }));
+$('fotoQuebrasCam').addEventListener('change', (ev) => addPhotos(ev, 'previewQuebras', fotoQuebrasFiles, () => hideError('errQuebras')));
+$('fotoQuebrasGal').addEventListener('change', (ev) => addPhotos(ev, 'previewQuebras', fotoQuebrasFiles, () => hideError('errQuebras')));
+$('fotoLimpezaCam').addEventListener('change', (ev) => addPhotos(ev, 'previewLimpeza', fotoLimpezaFiles, () => hideError('errLimpeza')));
+$('fotoLimpezaGal').addEventListener('change', (ev) => addPhotos(ev, 'previewLimpeza', fotoLimpezaFiles, () => hideError('errLimpeza')));
+$('fotoDespProdutosCam').addEventListener('change', (ev) => addPhotos(ev, 'previewDespProdutos', fotoDespProdutosFiles, () => hideError('errDespProdutos')));
+$('fotoDespProdutosGal').addEventListener('change', (ev) => addPhotos(ev, 'previewDespProdutos', fotoDespProdutosFiles, () => hideError('errDespProdutos')));
+$('fotoDespInsumosCam').addEventListener('change', (ev) => addPhotos(ev, 'previewDespInsumos', fotoDespInsumosFiles, () => hideError('errDespInsumos')));
+$('fotoDespInsumosGal').addEventListener('change', (ev) => addPhotos(ev, 'previewDespInsumos', fotoDespInsumosFiles, () => hideError('errDespInsumos')));
+$('fotoFechamentoCam').addEventListener('change', (ev) => addPhotos(ev, 'previewFechamento', fotoFechamentoFiles, () => hideError('errFechamento')));
+$('fotoFechamentoGal').addEventListener('change', (ev) => addPhotos(ev, 'previewFechamento', fotoFechamentoFiles, () => hideError('errFechamento')));
 
-function handlePhoto(ev, previewId, onDone) {
-  const file = ev.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    $(previewId).innerHTML = `<img src="${reader.result}"><div class="filename">✓ ${file.name}</div>`;
-  };
-  reader.readAsDataURL(file);
-  onDone(file);
+// Adiciona 1+ arquivos escolhidos a um array de fotos da seção e re-renderiza a galeria
+function addPhotos(ev, previewId, filesArr, onDone) {
+  const files = Array.from(ev.target.files || []);
+  if (!files.length) return;
+  files.forEach(f => filesArr.push(f));
+  renderGallery(previewId, filesArr);
+  ev.target.value = ''; // permite selecionar/tirar outra foto igual depois
+  onDone();
+}
+
+function renderGallery(previewId, filesArr) {
+  const box = $(previewId);
+  box.innerHTML = filesArr.map((file, idx) => {
+    const url = URL.createObjectURL(file);
+    return `<div class="mini-photo"><img src="${url}"><button type="button" class="rm" data-preview="${previewId}" data-idx="${idx}">✕</button></div>`;
+  }).join('');
+  box.querySelectorAll('.rm').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const arr = filesArrByPreview(btn.dataset.preview);
+      arr.splice(Number(btn.dataset.idx), 1);
+      renderGallery(btn.dataset.preview, arr);
+    });
+  });
+}
+
+function filesArrByPreview(previewId) {
+  return {
+    previewQuebras: fotoQuebrasFiles,
+    previewLimpeza: fotoLimpezaFiles,
+    previewDespProdutos: fotoDespProdutosFiles,
+    previewDespInsumos: fotoDespInsumosFiles,
+    previewFechamento: fotoFechamentoFiles
+  }[previewId];
 }
 
 function showError(id) { $(id).classList.add('show'); }
@@ -108,28 +138,28 @@ function validateStep(step) {
   }
   if (step === 3) {
     if ($('semQuebras').checked) return true;
-    if (!fotoQuebrasFile) { showError('errQuebras'); return false; }
+    if (!fotoQuebrasFiles.length) { showError('errQuebras'); return false; }
     return true;
   }
   if (step === 4) {
     if ($('semDespProdutos').checked) return true;
-    if (!fotoDespProdutosFile) { showError('errDespProdutos'); return false; }
+    if (!fotoDespProdutosFiles.length) { showError('errDespProdutos'); return false; }
     return true;
   }
   if (step === 5) {
     if ($('semDespInsumos').checked) return true;
-    if (!fotoDespInsumosFile) { showError('errDespInsumos'); return false; }
+    if (!fotoDespInsumosFiles.length) { showError('errDespInsumos'); return false; }
     return true;
   }
   if (step === 10) {
     if (limpezaFora === null) { showError('errLimpeza'); return false; }
     if (limpezaFora === false) return true;
-    if (!fotoLimpezaFile) { showError('errLimpeza'); return false; }
+    if (!fotoLimpezaFiles.length) { showError('errLimpeza'); return false; }
     return true;
   }
   if (step === 12) {
     if ($('semFotoFechamento').checked) return true;
-    if (!fotoFechamentoFile) { showError('errFechamento'); return false; }
+    if (!fotoFechamentoFiles.length) { showError('errFechamento'); return false; }
     return true;
   }
   return true;
@@ -223,20 +253,20 @@ $('btnSave').addEventListener('click', async () => {
   try {
     const reportData = buildReportData();
 
-    if (fotoQuebrasFile) {
-      reportData.foto_quebras_url = await uploadPhoto(fotoQuebrasFile, 'quebras');
+    if (fotoQuebrasFiles.length) {
+      reportData.foto_quebras_urls = await uploadPhotos(fotoQuebrasFiles, 'quebras');
     }
-    if (fotoDespProdutosFile) {
-      reportData.foto_desp_produtos_url = await uploadPhoto(fotoDespProdutosFile, 'desperdicio-produtos');
+    if (fotoDespProdutosFiles.length) {
+      reportData.foto_desp_produtos_urls = await uploadPhotos(fotoDespProdutosFiles, 'desperdicio-produtos');
     }
-    if (fotoDespInsumosFile) {
-      reportData.foto_desp_insumos_url = await uploadPhoto(fotoDespInsumosFile, 'desperdicio-insumos');
+    if (fotoDespInsumosFiles.length) {
+      reportData.foto_desp_insumos_urls = await uploadPhotos(fotoDespInsumosFiles, 'desperdicio-insumos');
     }
-    if (fotoLimpezaFile) {
-      reportData.foto_limpeza_url = await uploadPhoto(fotoLimpezaFile, 'limpeza');
+    if (fotoLimpezaFiles.length) {
+      reportData.foto_limpeza_urls = await uploadPhotos(fotoLimpezaFiles, 'limpeza');
     }
-    if (fotoFechamentoFile) {
-      reportData.foto_fechamento_url = await uploadPhoto(fotoFechamentoFile, 'fechamento');
+    if (fotoFechamentoFiles.length) {
+      reportData.foto_fechamento_urls = await uploadPhotos(fotoFechamentoFiles, 'fechamento');
     }
 
     const { error } = await supabaseClient.from('fechamentos').insert([reportData]);
@@ -256,12 +286,16 @@ $('btnSave').addEventListener('click', async () => {
   }
 });
 
-async function uploadPhoto(file, folder) {
-  const filename = `${folder}/${Date.now()}_${file.name}`;
-  const { error } = await supabaseClient.storage.from(BUCKET_FOTOS).upload(filename, file);
-  if (error) throw error;
-  const { data } = supabaseClient.storage.from(BUCKET_FOTOS).getPublicUrl(filename);
-  return data.publicUrl;
+async function uploadPhotos(files, folder) {
+  const urls = [];
+  for (const file of files) {
+    const filename = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2,7)}_${file.name}`;
+    const { error } = await supabaseClient.storage.from(BUCKET_FOTOS).upload(filename, file);
+    if (error) throw error;
+    const { data } = supabaseClient.storage.from(BUCKET_FOTOS).getPublicUrl(filename);
+    urls.push(data.publicUrl);
+  }
+  return urls;
 }
 
 // ================================================================
@@ -339,7 +373,9 @@ $('btnBuscarRelatorio').addEventListener('click', async () => {
     registros.sort((a, b) => (b.data + (b.hora_fechamento || '')).localeCompare(a.data + (a.hora_fechamento || '')));
 
     renderResumo(registros);
+    renderSemaforoPanel(registros);
     renderLista(registros);
+    ultimaBusca = { registros, de, ate };
 
     setStatusRelatorio(`✅ ${registros.length} registro(s) encontrado(s) entre ${fmtDate(de)} e ${fmtDate(ate)}.`, 'success');
   } catch (err) {
@@ -378,6 +414,54 @@ function renderResumo(registros) {
     </div>` : '';
 
   $('resumoBox').style.display = 'block';
+}
+
+function urlsOf(arr, legacyUrl) {
+  if (Array.isArray(arr) && arr.length) return arr;
+  return legacyUrl ? [legacyUrl] : [];
+}
+
+function issueFlags(r) {
+  return {
+    hasQuebras: !r.sem_quebras && (r.quebras || '').trim().length > 0,
+    hasDespProd: (r.desp_produtos || '').trim().length > 0,
+    hasDespIns: (r.desp_insumos || '').trim().length > 0,
+    hasProblem: (r.problema || '').trim().length > 0,
+    hasStockOut: (r.estoque_critico || '').toLowerCase().includes('acabou')
+  };
+}
+function semaforo(flags) {
+  if (flags.hasProblem || flags.hasStockOut) return 'red';
+  if (flags.hasQuebras || flags.hasDespProd || flags.hasDespIns) return 'yellow';
+  return 'green';
+}
+function semaforoLabel(s) { return s === 'red' ? 'Atenção' : s === 'yellow' ? 'Ocorrências' : 'Normal'; }
+
+function renderSemaforoPanel(registros) {
+  const rank = { green: 0, yellow: 1, red: 2 };
+  const byDate = {};
+  registros.forEach(r => {
+    const s = semaforo(issueFlags(r));
+    if (!byDate[r.data] || rank[s] > rank[byDate[r.data]]) byDate[r.data] = s;
+  });
+  const dates = Object.keys(byDate).sort().slice(-14);
+  if (!dates.length) { $('semaforoBox').innerHTML = ''; return; }
+  $('semaforoBox').innerHTML = `
+    <div class="mini-list">
+      <div class="mini-title">🚦 Indicadores por dia (últimos ${dates.length})</div>
+      <div class="semaphore-strip">
+        ${dates.map(d => {
+          const { dia, mesAno } = ficDiaMes(d);
+          return `<div class="sem-item"><span class="dot dot-${byDate[d]}"></span><span>${dia}/${mesAno.split('/')[0]}</span></div>`;
+        }).join('')}
+      </div>
+      <div class="semaphore-legend">
+        <span><span class="dot dot-green"></span> Normal</span>
+        <span><span class="dot dot-yellow"></span> Quebra/desperdício</span>
+        <span><span class="dot dot-red"></span> Problema ou estoque zerado</span>
+      </div>
+    </div>
+  `;
 }
 
 function statusFicha(r) {
@@ -424,12 +508,12 @@ function renderLista(registros) {
     const { dia, mesAno } = ficDiaMes(r.data);
 
     const fotos = [
-      [r.foto_quebras_url, 'Quebra'],
-      [r.foto_desp_produtos_url, 'Desperdício produto'],
-      [r.foto_desp_insumos_url, 'Desperdício insumo'],
-      [r.foto_limpeza_url, 'Bar limpo'],
-      [r.foto_fechamento_url, 'Fechamento'],
-    ].filter(([url]) => url);
+      ...urlsOf(r.foto_quebras_urls, r.foto_quebras_url).map(u => [u, 'Quebra']),
+      ...urlsOf(r.foto_desp_produtos_urls, r.foto_desp_produtos_url).map(u => [u, 'Desperdício produto']),
+      ...urlsOf(r.foto_desp_insumos_urls, r.foto_desp_insumos_url).map(u => [u, 'Desperdício insumo']),
+      ...urlsOf(r.foto_limpeza_urls, r.foto_limpeza_url).map(u => [u, 'Bar limpo']),
+      ...urlsOf(r.foto_fechamento_urls, r.foto_fechamento_url).map(u => [u, 'Fechamento']),
+    ];
 
     return `
     <details class="record-card ${classe}">
@@ -474,6 +558,104 @@ function renderLista(registros) {
 
   $('listaBox').style.display = 'block';
 }
+
+// ================================================================
+// EXPORTAR PDF / EXCEL
+// ================================================================
+function stripEmojis(s) {
+  return String(s).replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]/gu, '').replace(/ {2,}/g, ' ');
+}
+
+function fichaTextoPlano(r) {
+  const flags = issueFlags(r);
+  const status = semaforoLabel(semaforo(flags)).toUpperCase();
+  const linhas = [];
+  linhas.push(`${fmtDate(r.data)} - ${r.responsavel || '-'} - STATUS: ${status}`);
+  linhas.push(`Fluxo: ${r.fluxo || '-'}`);
+  linhas.push(`Quebras: ${r.sem_quebras ? 'Sem quebras' : (r.quebras || '-')}`);
+  linhas.push(`Desperdicio produtos: ${r.desp_produtos || '-'}`);
+  linhas.push(`Desperdicio insumos: ${r.desp_insumos || '-'}`);
+  linhas.push(`Producao OK: ${r.prod_ok || '-'}`);
+  linhas.push(`Producao iniciada: ${r.prod_iniciada || '-'}`);
+  linhas.push(`Producao baixa: ${r.prod_baixa || '-'}`);
+  linhas.push(`Estoque critico: ${r.estoque_critico || '-'}`);
+  linhas.push(`Limpeza fora do padrao: ${r.limpeza_fora_padrao === true ? 'Sim' : r.limpeza_fora_padrao === false ? 'Nao' : '-'}`);
+  linhas.push(`Observacao limpeza: ${r.limpeza_obs || '-'}`);
+  linhas.push(`Atencao: ${r.atencao || '-'}`);
+  linhas.push(`Problema: ${r.problema || '-'}`);
+  linhas.push(`Sugestao: ${r.sugestao || '-'}`);
+  linhas.push(`Bar fechado as: ${r.hora_fechamento || '-'}`);
+  return stripEmojis(linhas.join('\n'));
+}
+
+$('btnExportExcel').addEventListener('click', () => {
+  if (typeof XLSX === 'undefined') { alert('A biblioteca de exportação ainda está carregando. Tente novamente em alguns segundos.'); return; }
+  if (!ultimaBusca || !ultimaBusca.registros.length) { alert('Busque um relatório antes de exportar.'); return; }
+  const { registros, de, ate } = ultimaBusca;
+
+  const linhas = registros.map(r => {
+    const flags = issueFlags(r);
+    return {
+      Data: fmtDate(r.data),
+      Responsavel: r.responsavel || '-',
+      Fluxo: r.fluxo || '-',
+      Quebras: r.sem_quebras ? 'Sem quebras' : (r.quebras || '-'),
+      DesperdicioProdutos: r.desp_produtos || '-',
+      DesperdicioInsumos: r.desp_insumos || '-',
+      ProducaoOk: r.prod_ok || '-',
+      ProducaoIniciada: r.prod_iniciada || '-',
+      ProducaoBaixa: r.prod_baixa || '-',
+      EstoqueCritico: r.estoque_critico || '-',
+      LimpezaForaPadrao: r.limpeza_fora_padrao === true ? 'Sim' : r.limpeza_fora_padrao === false ? 'Nao' : '-',
+      ObservacaoLimpeza: r.limpeza_obs || '-',
+      Atencao: r.atencao || '-',
+      Problema: r.problema || '-',
+      Sugestao: r.sugestao || '-',
+      Fechamento: r.hora_fechamento || '-',
+      Status: semaforoLabel(semaforo(flags))
+    };
+  });
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhas), 'Fechamentos');
+  XLSX.writeFile(wb, `el-loco-fechamentos_${de}_a_${ate}.xlsx`);
+});
+
+$('btnExportPdf').addEventListener('click', () => {
+  if (typeof window.jspdf === 'undefined') { alert('A biblioteca de exportação ainda está carregando. Tente novamente em alguns segundos.'); return; }
+  if (!ultimaBusca || !ultimaBusca.registros.length) { alert('Busque um relatório antes de exportar.'); return; }
+  const { registros, de, ate } = ultimaBusca;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageH = doc.internal.pageSize.getHeight();
+  const pageW = doc.internal.pageSize.getWidth();
+  const marginX = 12;
+  let y = 16;
+
+  doc.setFont('courier', 'bold'); doc.setFontSize(13);
+  doc.text('EL LOCO - FECHAMENTOS DO BAR - PERIODO', marginX, y); y += 6;
+  doc.setFont('courier', 'normal'); doc.setFontSize(9);
+  doc.text(`${fmtDate(de)} a ${fmtDate(ate)}  |  Gerado em ${new Date().toLocaleString('pt-BR')}`, marginX, y);
+  y += 9;
+
+  registros.forEach(r => {
+    const lines = doc.splitTextToSize(fichaTextoPlano(r), pageW - marginX * 2);
+    if (y + lines.length * 4.2 + 8 > pageH - 14) { doc.addPage(); y = 16; }
+    doc.setFontSize(8.5);
+    lines.forEach(line => {
+      if (y > pageH - 14) { doc.addPage(); y = 16; }
+      doc.text(line, marginX, y);
+      y += 4.2;
+    });
+    y += 4;
+    if (y > pageH - 14) { doc.addPage(); y = 16; } else {
+      doc.setDrawColor(200); doc.line(marginX, y - 2, pageW - marginX, y - 2); y += 5;
+    }
+  });
+
+  doc.save(`el-loco-fechamentos_${de}_a_${ate}.pdf`);
+});
 
 // ---------- start ----------
 goToStep(1);
