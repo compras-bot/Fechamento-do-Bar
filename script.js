@@ -202,7 +202,7 @@ $('btnSave').addEventListener('click', async () => {
       reportData.foto_fechamento_url = await uploadPhoto(fotoFechamentoFile, 'fechamento');
     }
 
-    const { error } = await supabase.from('fechamentos').insert([reportData]);
+    const { error } = await supabaseClient.from('fechamentos').insert([reportData]);
     if (error) throw error;
 
     setStatus('✅ Registro salvo na nuvem com sucesso!', 'success');
@@ -221,9 +221,9 @@ $('btnSave').addEventListener('click', async () => {
 
 async function uploadPhoto(file, folder) {
   const filename = `${folder}/${Date.now()}_${file.name}`;
-  const { error } = await supabase.storage.from(BUCKET_FOTOS).upload(filename, file);
+  const { error } = await supabaseClient.storage.from(BUCKET_FOTOS).upload(filename, file);
   if (error) throw error;
-  const { data } = supabase.storage.from(BUCKET_FOTOS).getPublicUrl(filename);
+  const { data } = supabaseClient.storage.from(BUCKET_FOTOS).getPublicUrl(filename);
   return data.publicUrl;
 }
 
@@ -284,7 +284,7 @@ $('btnBuscarRelatorio').addEventListener('click', async () => {
   $('listaBox').style.display = 'none';
 
   try {
-    const { data: registrosRaw, error } = await supabase
+    const { data: registrosRaw, error } = await supabaseClient
       .from('fechamentos')
       .select('*')
       .gte('data', de)
