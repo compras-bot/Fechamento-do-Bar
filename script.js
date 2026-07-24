@@ -41,11 +41,28 @@ $('btnNao').addEventListener('click', () => { limpezaFora = false; updateLimpeza
 function updateLimpezaToggle() {
   $('btnSim').classList.toggle('active-yes', limpezaFora === true);
   $('btnNao').classList.toggle('active-no', limpezaFora === false);
+  $('fotoLimpezaBox').style.display = limpezaFora === true ? 'block' : 'none';
+  hideError('errLimpeza');
 }
 
 $('semQuebras').addEventListener('change', () => {
   $('quebrasBox').style.display = $('semQuebras').checked ? 'none' : 'block';
   hideError('errQuebras');
+});
+
+$('semDespProdutos').addEventListener('change', () => {
+  $('despProdutosBox').style.display = $('semDespProdutos').checked ? 'none' : 'block';
+  hideError('errDespProdutos');
+});
+
+$('semDespInsumos').addEventListener('change', () => {
+  $('despInsumosBox').style.display = $('semDespInsumos').checked ? 'none' : 'block';
+  hideError('errDespInsumos');
+});
+
+$('semFotoFechamento').addEventListener('change', () => {
+  $('fotoFechamentoBox').style.display = $('semFotoFechamento').checked ? 'none' : 'block';
+  hideError('errFechamento');
 });
 
 $('fotoQuebras').addEventListener('change', (ev) => handlePhoto(ev, 'previewQuebras', (f) => { fotoQuebrasFile = f; hideError('errQuebras'); }));
@@ -80,18 +97,23 @@ function validateStep(step) {
     return true;
   }
   if (step === 4) {
+    if ($('semDespProdutos').checked) return true;
     if (!fotoDespProdutosFile) { showError('errDespProdutos'); return false; }
     return true;
   }
   if (step === 5) {
+    if ($('semDespInsumos').checked) return true;
     if (!fotoDespInsumosFile) { showError('errDespInsumos'); return false; }
     return true;
   }
   if (step === 10) {
+    if (limpezaFora === null) { showError('errLimpeza'); return false; }
+    if (limpezaFora === false) return true;
     if (!fotoLimpezaFile) { showError('errLimpeza'); return false; }
     return true;
   }
   if (step === 12) {
+    if ($('semFotoFechamento').checked) return true;
     if (!fotoFechamentoFile) { showError('errFechamento'); return false; }
     return true;
   }
@@ -127,8 +149,8 @@ function renderReview() {
   L.push(row('Responsável', responsavelSelecionado || '–'));
   L.push(row('Fluxo', $('fluxo').value));
   L.push(row('Quebras', $('semQuebras').checked ? 'Sem quebras' : ($('quebras').value || '–')));
-  L.push(row('Desperdício produtos', $('despProdutos').value || '–'));
-  L.push(row('Desperdício insumos', $('despInsumos').value || '–'));
+  L.push(row('Desperdício produtos', $('semDespProdutos').checked ? 'Sem desperdício' : ($('despProdutos').value || '–')));
+  L.push(row('Desperdício insumos', $('semDespInsumos').checked ? 'Sem desperdício' : ($('despInsumos').value || '–')));
   L.push(row('Produção OK', $('prodOk').value || '–'));
   L.push(row('Produção iniciada', $('prodIniciada').value || '–'));
   L.push(row('Produção baixa', $('prodBaixa').value || '–'));

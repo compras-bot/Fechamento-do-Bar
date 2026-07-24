@@ -64,8 +64,8 @@
         <div class="hint">Motivo: acidente / uso indevido / desgaste</div>
 
         <label style="margin-top:12px;">Foto do item quebrado (comprovante)</label>
-        <label class="file-btn" for="fotoQuebras">📷 Anexar foto</label>
-        <input type="file" id="fotoQuebras" accept="image/*" capture="environment" hidden>
+        <label class="file-btn" for="fotoQuebras">📷 Tirar foto ou escolher da galeria</label>
+        <input type="file" id="fotoQuebras" accept="image/*" hidden>
         <div class="photo-preview" id="previewQuebras"></div>
         <div class="error-text" id="errQuebras">Anexe uma foto da quebra para continuar (ou marque "Sem quebras hoje")</div>
       </div>
@@ -76,15 +76,21 @@
   <div class="step" data-step="4">
     <div class="section">
       <div class="section-head"><div class="num">3</div><h2>Desperdício — produtos</h2></div>
-      <label for="despProdutos">Produto — motivo — quantidade</label>
-      <textarea id="despProdutos" placeholder="Caipirinha de limão – erro de pedido – 1"></textarea>
-      <div class="hint">Motivo: erro / validade / cliente</div>
+      <div class="check-line">
+        <input type="checkbox" id="semDespProdutos">
+        <label for="semDespProdutos" class="inline-label">Sem desperdício de produtos hoje</label>
+      </div>
+      <div id="despProdutosBox">
+        <label for="despProdutos">Produto — motivo — quantidade</label>
+        <textarea id="despProdutos" placeholder="Caipirinha de limão – erro de pedido – 1"></textarea>
+        <div class="hint">Motivo: erro / validade / cliente</div>
 
-      <label style="margin-top:12px;">Foto do produto desperdiçado (comprovante)</label>
-      <label class="file-btn" for="fotoDespProdutos">📷 Anexar foto</label>
-      <input type="file" id="fotoDespProdutos" accept="image/*" capture="environment" hidden>
-      <div class="photo-preview" id="previewDespProdutos"></div>
-      <div class="error-text" id="errDespProdutos">Anexe uma foto para continuar</div>
+        <label style="margin-top:12px;">Foto do produto desperdiçado (comprovante)</label>
+        <label class="file-btn" for="fotoDespProdutos">📷 Tirar foto ou escolher da galeria</label>
+        <input type="file" id="fotoDespProdutos" accept="image/*" hidden>
+        <div class="photo-preview" id="previewDespProdutos"></div>
+        <div class="error-text" id="errDespProdutos">Anexe uma foto para continuar (ou marque "Sem desperdício de produtos hoje")</div>
+      </div>
     </div>
   </div>
 
@@ -92,15 +98,21 @@
   <div class="step" data-step="5">
     <div class="section">
       <div class="section-head"><div class="num">4</div><h2>Desperdício — insumos</h2></div>
-      <label for="despInsumos">Insumo — motivo — quantidade aprox.</label>
-      <textarea id="despInsumos" placeholder="Limão – passado – 6 unidades"></textarea>
-      <div class="hint">Motivo: passado / excesso / armazenamento</div>
+      <div class="check-line">
+        <input type="checkbox" id="semDespInsumos">
+        <label for="semDespInsumos" class="inline-label">Sem desperdício de insumos hoje</label>
+      </div>
+      <div id="despInsumosBox">
+        <label for="despInsumos">Insumo — motivo — quantidade aprox.</label>
+        <textarea id="despInsumos" placeholder="Limão – passado – 6 unidades"></textarea>
+        <div class="hint">Motivo: passado / excesso / armazenamento</div>
 
-      <label style="margin-top:12px;">Foto do insumo desperdiçado (comprovante)</label>
-      <label class="file-btn" for="fotoDespInsumos">📷 Anexar foto</label>
-      <input type="file" id="fotoDespInsumos" accept="image/*" capture="environment" hidden>
-      <div class="photo-preview" id="previewDespInsumos"></div>
-      <div class="error-text" id="errDespInsumos">Anexe uma foto para continuar</div>
+        <label style="margin-top:12px;">Foto do insumo desperdiçado (comprovante)</label>
+        <label class="file-btn" for="fotoDespInsumos">📷 Tirar foto ou escolher da galeria</label>
+        <input type="file" id="fotoDespInsumos" accept="image/*" hidden>
+        <div class="photo-preview" id="previewDespInsumos"></div>
+        <div class="error-text" id="errDespInsumos">Anexe uma foto para continuar (ou marque "Sem desperdício de insumos hoje")</div>
+      </div>
     </div>
   </div>
 
@@ -152,11 +164,13 @@
       <label for="limpezaObs">Observação (opcional)</label>
       <input type="text" id="limpezaObs" placeholder="Câmara fria precisa de limpeza">
 
-      <label style="margin-top:12px;">Foto do bar limpo (comprovante de fechamento)</label>
-      <label class="file-btn" for="fotoLimpeza">📷 Anexar foto</label>
-      <input type="file" id="fotoLimpeza" accept="image/*" capture="environment" hidden>
-      <div class="photo-preview" id="previewLimpeza"></div>
-      <div class="error-text" id="errLimpeza">Anexe uma foto do bar para continuar</div>
+      <div id="fotoLimpezaBox" style="display:none;">
+        <label style="margin-top:12px;">Foto do bar limpo (comprovante de fechamento)</label>
+        <label class="file-btn" for="fotoLimpeza">📷 Tirar foto ou escolher da galeria</label>
+        <input type="file" id="fotoLimpeza" accept="image/*" hidden>
+        <div class="photo-preview" id="previewLimpeza"></div>
+      </div>
+      <div class="error-text" id="errLimpeza">Selecione "Sim" ou "Não", e anexe a foto caso tenha algo fora do padrão</div>
     </div>
   </div>
 
@@ -180,11 +194,17 @@
       <label for="horaFechamento">Bar fechado às</label>
       <input type="time" id="horaFechamento">
 
-      <label style="margin-top:12px;">Foto final do bar fechado (comprovante)</label>
-      <label class="file-btn" for="fotoFechamento">📷 Anexar foto</label>
-      <input type="file" id="fotoFechamento" accept="image/*" capture="environment" hidden>
-      <div class="photo-preview" id="previewFechamento"></div>
-      <div class="error-text" id="errFechamento">Anexe a foto do fechamento para continuar</div>
+      <div class="check-line" style="margin-top:12px;">
+        <input type="checkbox" id="semFotoFechamento">
+        <label for="semFotoFechamento" class="inline-label">Nada adicional para fotografar hoje</label>
+      </div>
+      <div id="fotoFechamentoBox">
+        <label>Foto final do bar fechado (comprovante)</label>
+        <label class="file-btn" for="fotoFechamento">📷 Tirar foto ou escolher da galeria</label>
+        <input type="file" id="fotoFechamento" accept="image/*" hidden>
+        <div class="photo-preview" id="previewFechamento"></div>
+        <div class="error-text" id="errFechamento">Anexe a foto do fechamento para continuar (ou marque a opção acima)</div>
+      </div>
     </div>
   </div>
 
