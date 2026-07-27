@@ -438,21 +438,47 @@ function semaforo(flags) {
 function semaforoLabel(s) { return s === 'red' ? 'Atenção' : s === 'yellow' ? 'Ocorrências' : 'Normal'; }
 
 function renderSemaforoPanel(registros) {
-  const rank = { green: 0, yellow: 1, red: 2 };
   const byDate = {};
   registros.forEach(r => {
-    const s = semaforo(issueFlags(r));
-    if (!byDate[r.data] || rank[s] > rank[byDate[r.data]]) byDate[r.data] = s;
+    const f = issueFlags(r);
+    if (!byDate[r.data]) {
+      byDate[r.data] = { hasQuebras: false, hasDespProd: false, hasDespIns: false, hasProblem: false, hasStockOut: false };
+    }
+    const acc = byDate[r.data];
+    acc.hasQuebras = acc.hasQuebras || f.hasQuebras;
+    acc.hasDespProd = acc.hasDespProd || f.hasDespProd;
+    acc.hasDespIns = acc.hasDespIns || f.hasDespIns;
+    acc.hasProblem = acc.hasProblem || f.hasProblem;
+    acc.hasStockOut = acc.hasStockOut || f.hasStockOut;
   });
+
   const dates = Object.keys(byDate).sort().slice(-14);
   if (!dates.length) { $('semaforoBox').innerHTML = ''; return; }
+
+  function dotsForDay(flags) {
+    const dots = [];
+    if (flags.hasProblem) dots.push({ cor: 'red', titulo: 'Problema relatado' });
+    if (flags.hasStockOut) dots.push({ cor: 'red', titulo: 'Estoque zerado' });
+    if (flags.hasQuebras) dots.push({ cor: 'yellow', titulo: 'Quebra' });
+    if (flags.hasDespProd) dots.push({ cor: 'yellow', titulo: 'Desperdício de produtos' });
+    if (flags.hasDespIns) dots.push({ cor: 'yellow', titulo: 'Desperdício de insumos' });
+    if (dots.length === 0) dots.push({ cor: 'green', titulo: 'Normal' });
+    return dots;
+  }
+
   $('semaforoBox').innerHTML = `
     <div class="mini-list">
       <div class="mini-title">🚦 Indicadores por dia (últimos ${dates.length})</div>
       <div class="semaphore-strip">
         ${dates.map(d => {
           const { dia, mesAno } = ficDiaMes(d);
-          return `<div class="sem-item"><span class="dot dot-${byDate[d]}"></span><span>${dia}/${mesAno.split('/')[0]}</span></div>`;
+          const dots = dotsForDay(byDate[d]);
+          return `<div class="sem-item">
+            <div class="dot-cluster">
+              ${dots.map(dot => `<span class="dot dot-${dot.cor}" title="${escapeHtml(dot.titulo)}"></span>`).join('')}
+            </div>
+            <span>${dia}/${mesAno.split('/')[0]}</span>
+          </div>`;
         }).join('')}
       </div>
       <div class="semaphore-legend">
