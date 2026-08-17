@@ -12,7 +12,7 @@
 // ============================================================
 
 const SUPABASE_URL = "https://aeyafjsmtupfrawanscg.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_IiYxl9TH5yor9JGjZ95mnQ_RcEv9DE0";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sb2hqdnFpbW9yY3FjcnNkc3pmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMTc4MjAsImV4cCI6MjEwMTU5MzgyMH0.SGDQL5OioOZPpBDHZnOeJ460AkFbxKNEpdZ20BKsdlU";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
