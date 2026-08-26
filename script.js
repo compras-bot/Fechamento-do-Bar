@@ -683,5 +683,236 @@ $('btnExportPdf').addEventListener('click', () => {
   doc.save(`el-loco-fechamentos_${de}_a_${ate}.pdf`);
 });
 
+// ================================================================
+// ABA 3 — DESPERDÍCIO
+// ================================================================
+let insumosAtivos = [];        // [{id, nome}]
+let contagemDesperdicio = {};  // { insumo_id: quantidade }
+
+if ($('despData')) $('despData').value = todayISO();
+
+async function carregarInsumos() {
+  const { data, error } = await supabaseClient
+    .from('insumos_desperdicio')
+    .select('*')
+    .eq('ativo', true)
+    .order('nome', { ascending: true });
+  if (error) { console.error(error); return; }
+  insumosAtivos = data || [];
+  renderInsumoGrid();
+}
+
+function renderInsumoGrid() {
+  const grid = $('insumoGrid');
+  if (!grid) return;
+
+  grid.innerHTML = insumosAtivos.length ? insumosAtivos.map(i => {
+    const qtd = contagemDesperdicio[i.id] || 0;
+    return `
+      <div class="insumo-card${qtd > 0 ? ' has-qtd' : ''}">
+        <button type="button" class="insumo-rm" data-id="${i.id}" title="Remover insumo">✕</button>
+        <div class="insumo-nome">${escapeHtml(i.nome)}</div>
+        <div class="insumo-controls">
+          <button type="button" class="insumo-btn-minus" data-id="${i.id}">–</button>
+          <span class="insumo-qtd">${qtd}</span>
+          <button type="button" class="insumo-btn-plus" data-id="${i.id}">+</button>
+        </div>
+      </div>`;
+  }).join('') : '<div class="hint">Nenhum insumo cadastrado ainda. Adicione um abaixo.</div>';
+
+  grid.querySelectorAll('.insumo-btn-plus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      contagemDesperdicio[id] = (contagemDesperdicio[id] || 0) + 1;
+      renderInsumoGrid();
+    });
+  });
+  grid.querySelectorAll('.insumo-btn-minus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      contagemDesperdicio[id] = Math.max(0, (contagemDesperdicio[id] || 0) - 1);
+      renderInsumoGrid();
+    });
+  });
+  grid.querySelectorAll('.insumo-rm').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const insumo = insumosAtivos.find(i => i.id === id);
+      if (!insumo) return;
+      if (!confirm(`Remover "${insumo.nome}" da lista de botões? (o histórico já salvo não é afetado)`)) return;
+      const { error } = await supabaseClient.from('insumos_desperdicio').update({ ativo: false }).eq('id', id);
+      if (error) { alert('Erro ao remover: ' + error.message); return; }
+      delete contagemDesperdicio[id];
+      await carregarInsumos();
+    });
+  });
+}
+
+if ($('btnNovoInsumo')) {
+  $('btnNovoInsumo').addEventListener('click', async () => {
+    const nome = $('novoInsumoNome').value.trim();
+    if (!nome) return;
+    $('btnNovoInsumo').disabled = true;
+    const { error } = await supabaseClient.from('insumos_desperdicio').insert([{ nome }]);
+    $('btnNovoInsumo').disabled = false;
+    if (error) { alert('Erro ao adicionar insumo: ' + error.message); return; }
+    $('novoInsumoNome').value = '';
+    await carregarInsumos();
+  });
+}
+
+function setStatusDesperdicio(msg, type) {
+  const el = $('statusDesperdicio');
+  el.textContent = msg;
+  el.className = 'status-message show ' + (type || 'info');
+}
+
+if ($('btnSalvarDesperdicio')) {
+  $('btnSalvarDesperdicio').addEventListener('click', async () => {
+    const entradas = Object.entries(contagemDesperdicio).filter(([, qtd]) => qtd > 0);
+    if (!entradas.length) { setStatusDesperdicio('Marque a quantidade de ao menos um insumo antes de salvar.', 'error'); return; }
+
+    $('btnSalvarDesperdicio').disabled = true;
+    setStatusDesperdicio('Salvando…', 'info');
+
+    try {
+      const data = $('despData').value || todayISO();
+      const obs = $('despObs').value.trim();
+      const linhas = entradas.map(([insumoId, qtd]) => {
+        const insumo = insumosAtivos.find(i => i.id === insumoId);
+        return {
+          data,
+          insumo_id: insumoId,
+          insumo_nome: insumo ? insumo.nome : '–',
+          quantidade: qtd,
+          observacao: obs || null,
+          responsavel: responsavelSelecionado || null
+        };
+      });
+      const { error } = await supabaseClient.from('desperdicios').insert(linhas);
+      if (error) throw error;
+
+      setStatusDesperdicio('✅ Desperdício registrado com sucesso!', 'success');
+      contagemDesperdicio = {};
+      $('despObs').value = '';
+      renderInsumoGrid();
+    } catch (err) {
+      console.error(err);
+      setStatusDesperdicio('❌ Erro ao salvar: ' + err.message, 'error');
+    } finally {
+      $('btnSalvarDesperdicio').disabled = false;
+    }
+  });
+}
+
+// ---------- histórico de desperdício ----------
+if ($('despFiltroPeriodo')) {
+  $('despFiltroPeriodo').addEventListener('change', () => {
+    $('despFiltroPersonalizado').style.display = $('despFiltroPeriodo').value === 'personalizado' ? 'block' : 'none';
+  });
+}
+
+function getDespDateRange() {
+  const periodo = $('despFiltroPeriodo').value;
+  const today = new Date();
+  const toISO = (d) => d.toISOString().slice(0, 10);
+  if (periodo === 'hoje') { const iso = toISO(today); return { de: iso, ate: iso }; }
+  if (periodo === 'semana') { const de = new Date(today); de.setDate(de.getDate() - 6); return { de: toISO(de), ate: toISO(today) }; }
+  if (periodo === 'mes') { const de = new Date(today.getFullYear(), today.getMonth(), 1); return { de: toISO(de), ate: toISO(today) }; }
+  return { de: $('despFiltroDe').value || toISO(today), ate: $('despFiltroAte').value || toISO(today) };
+}
+
+function setStatusHistoricoDesp(msg, type) {
+  const el = $('statusHistoricoDesp');
+  el.textContent = msg;
+  el.className = 'status-message show ' + (type || 'info');
+}
+
+if ($('btnBuscarDesperdicio')) {
+  $('btnBuscarDesperdicio').addEventListener('click', async () => {
+    const { de, ate } = getDespDateRange();
+    if (!de || !ate) { setStatusHistoricoDesp('Selecione as datas do período personalizado.', 'error'); return; }
+
+    $('btnBuscarDesperdicio').disabled = true;
+    setStatusHistoricoDesp('Buscando…', 'info');
+    $('despResumoBox').style.display = 'none';
+    $('despListaBox').style.display = 'none';
+
+    try {
+      const { data: registros, error } = await supabaseClient
+        .from('desperdicios')
+        .select('*')
+        .gte('data', de)
+        .lte('data', ate)
+        .order('data', { ascending: false });
+      if (error) throw error;
+
+      renderDespResumo(registros || []);
+      renderDespPorDia(registros || []);
+      setStatusHistoricoDesp(`✅ ${(registros || []).length} registro(s) entre ${fmtDate(de)} e ${fmtDate(ate)}.`, 'success');
+    } catch (err) {
+      console.error(err);
+      setStatusHistoricoDesp('❌ Erro ao buscar: ' + err.message, 'error');
+    } finally {
+      $('btnBuscarDesperdicio').disabled = false;
+    }
+  });
+}
+
+function renderDespResumo(registros) {
+  const totaisPorInsumo = {};
+  registros.forEach(r => {
+    totaisPorInsumo[r.insumo_nome] = (totaisPorInsumo[r.insumo_nome] || 0) + Number(r.quantidade || 0);
+  });
+  const nomes = Object.keys(totaisPorInsumo).sort((a, b) => totaisPorInsumo[b] - totaisPorInsumo[a]);
+
+  $('despTotaisGrid').innerHTML = nomes.length
+    ? nomes.map(n => `<div class="stat-card"><div class="stat-num">${totaisPorInsumo[n]}</div><div class="stat-label">${escapeHtml(n)}</div></div>`).join('')
+    : '<div class="hint">Nenhum desperdício registrado nesse período.</div>';
+
+  $('despResumoBox').style.display = 'block';
+}
+
+function renderDespPorDia(registros) {
+  if (!registros.length) {
+    $('despListaPorDia').innerHTML = '<div class="hint">Nenhum registro encontrado nesse período.</div>';
+    $('despListaBox').style.display = 'block';
+    return;
+  }
+
+  const porDia = {};
+  registros.forEach(r => {
+    if (!porDia[r.data]) porDia[r.data] = [];
+    porDia[r.data].push(r);
+  });
+  const dias = Object.keys(porDia).sort().reverse();
+
+  $('despListaPorDia').innerHTML = dias.map(d => {
+    const itens = porDia[d];
+    const resumo = itens.map(r => `${escapeHtml(r.insumo_nome)}: ${r.quantidade}`).join(' · ');
+    const { dia, mesAno } = ficDiaMes(d);
+    return `
+      <details class="record-card st-desperdicio">
+        <summary>
+          <div class="ficha-date">${dia}<small>${mesAno}</small></div>
+          <div class="ficha-info">
+            <div class="ficha-resp">${resumo}</div>
+          </div>
+        </summary>
+        <div class="record-detail">
+          ${itens.map(r => `
+            <div class="ficha-section">
+              <div class="ficha-section-head"><div class="num-mini">•</div><div class="stitle">${escapeHtml(r.insumo_nome)} — ${r.quantidade}</div></div>
+              <div class="sbody ${r.observacao ? '' : 'empty'}">${r.observacao ? escapeHtml(r.observacao) : '–'}${r.responsavel ? ` (${escapeHtml(r.responsavel)})` : ''}</div>
+            </div>`).join('')}
+        </div>
+      </details>`;
+  }).join('');
+
+  $('despListaBox').style.display = 'block';
+}
+
+carregarInsumos();
+
 // ---------- start ----------
 goToStep(1);
