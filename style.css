@@ -749,3 +749,98 @@ textarea { resize: vertical; min-height: 58px; line-height: 1.5; }
 }
 .theme-toggle:hover { border-color: var(--brass); }
 .theme-toggle:active { transform: scale(0.92); }
+
+/* ============================================================
+   ABA DESPERDÍCIO — cole isto no FINAL do seu style.css
+   ============================================================ */
+
+.insumo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.insumo-card {
+  position: relative;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  padding: 12px 10px;
+  text-align: center;
+  background: var(--card-bg, rgba(255, 255, 255, 0.03));
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.insumo-card.has-qtd {
+  border-color: var(--accent, #ff6b35);
+  background: var(--accent-bg, rgba(255, 107, 53, 0.1));
+}
+
+.insumo-nome {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.insumo-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.insumo-btn-plus,
+.insumo-btn-minus {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.2));
+  background: transparent;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.insumo-btn-plus:hover,
+.insumo-btn-minus:hover {
+  background: var(--accent, #ff6b35);
+  border-color: var(--accent, #ff6b35);
+  color: #fff;
+}
+
+.insumo-qtd {
+  min-width: 20px;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.insumo-rm {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  color: var(--muted, #888);
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.insumo-rm:hover {
+  opacity: 1;
+  color: #e63946;
+}
+
+.insumo-add-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.insumo-add-row input {
+  flex: 1;
+}
