@@ -16,6 +16,7 @@
   <div class="tabs">
     <button class="tab-btn active" id="tabBtnFechamento" data-tab="fechamento">Fechamento do bar</button>
     <button class="tab-btn" id="tabBtnRelatorio" data-tab="relatorio">Relatório de fechamento</button>
+    <button class="tab-btn" id="tabBtnDesperdicio" data-tab="desperdicio">Desperdício</button>
   </div>
 
   <div id="tab-fechamento" class="tab-panel active">
@@ -308,6 +309,71 @@
     </div>
   </div>
   <!-- /tab-relatorio -->
+
+  <div id="tab-desperdicio" class="tab-panel">
+    <div class="masthead">
+      <div class="eyebrow">El Loco · controle de perdas</div>
+      <h1>Registro <em>de desperdício</em></h1>
+      <div class="sub">Toque no insumo perdido e registre a quantidade</div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><div class="num">·</div><h2>Insumos desperdiçados</h2></div>
+      <label for="despData">Data</label>
+      <input type="date" id="despData">
+
+      <div class="insumo-grid" id="insumoGrid"></div>
+
+      <div class="insumo-add-row">
+        <input type="text" id="novoInsumoNome" placeholder="Nome do novo insumo (ex: Abacaxi)">
+        <button class="btn btn-clear" id="btnNovoInsumo" type="button">➕ Adicionar</button>
+      </div>
+
+      <label for="despObs" style="margin-top:12px;">Observação (opcional)</label>
+      <input type="text" id="despObs" placeholder="Ex: caixa inteira estragada">
+
+      <button class="btn btn-copy" id="btnSalvarDesperdicio" style="margin-top:14px; width:100%;" type="button">Salvar desperdícios de hoje</button>
+      <div class="status-message" id="statusDesperdicio"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head"><div class="num">·</div><h2>Filtrar histórico</h2></div>
+      <label for="despFiltroPeriodo">Período</label>
+      <select id="despFiltroPeriodo">
+        <option value="hoje">Hoje</option>
+        <option value="semana" selected>Últimos 7 dias</option>
+        <option value="mes">Este mês</option>
+        <option value="personalizado">Personalizado</option>
+      </select>
+
+      <div id="despFiltroPersonalizado" style="display:none;">
+        <div class="field-row" style="margin-top:10px;">
+          <div>
+            <label for="despFiltroDe">De</label>
+            <input type="date" id="despFiltroDe">
+          </div>
+          <div>
+            <label for="despFiltroAte">Até</label>
+            <input type="date" id="despFiltroAte">
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-copy" id="btnBuscarDesperdicio" style="margin-top:14px; width:100%;" type="button">Buscar histórico</button>
+      <div class="status-message" id="statusHistoricoDesp"></div>
+    </div>
+
+    <div class="section" id="despResumoBox" style="display:none;">
+      <div class="section-head"><div class="num">Σ</div><h2>Totais do período</h2></div>
+      <div class="stats-grid" id="despTotaisGrid"></div>
+    </div>
+
+    <div class="section" id="despListaBox" style="display:none;">
+      <div class="section-head"><div class="num">☰</div><h2>Por dia</h2></div>
+      <div id="despListaPorDia"></div>
+    </div>
+  </div>
+  <!-- /tab-desperdicio -->
 </div>
 <!-- /wrap -->
 
