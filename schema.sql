@@ -85,3 +85,60 @@ alter table fechamentos add column if not exists foto_desp_produtos_urls text[] 
 alter table fechamentos add column if not exists foto_desp_insumos_urls text[] default '{}';
 alter table fechamentos add column if not exists foto_limpeza_urls text[] default '{}';
 alter table fechamentos add column if not exists foto_fechamento_urls text[] default '{}';
+
+-- ============================================================
+-- 6) RELATÓRIO DE DESPERDÍCIO — botões de insumo + registros
+-- ============================================================
+
+-- 6.1) Lista de insumos que viram "botão" na tela (limão, laranja, garrafa quebrada...)
+create table if not exists insumos_desperdicio (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null,
+  ativo boolean default true,
+  criado_em timestamptz default now()
+);
+
+alter table insumos_desperdicio enable row level security;
+
+drop policy if exists "permitir leitura anon insumos" on insumos_desperdicio;
+create policy "permitir leitura anon insumos" on insumos_desperdicio
+  for select using (true);
+
+drop policy if exists "permitir insercao anon insumos" on insumos_desperdicio;
+create policy "permitir insercao anon insumos" on insumos_desperdicio
+  for insert with check (true);
+
+drop policy if exists "permitir update anon insumos" on insumos_desperdicio;
+create policy "permitir update anon insumos" on insumos_desperdicio
+  for update using (true);
+
+-- 6.2) Registros de desperdício (o que foi perdido, quanto, quando)
+-- insumo_nome fica gravado "congelado" aqui, então se um insumo for
+-- removido da lista de botões, o histórico antigo não é afetado.
+create table if not exists desperdicios (
+  id uuid primary key default gen_random_uuid(),
+  data date not null,
+  insumo_id uuid references insumos_desperdicio(id) on delete set null,
+  insumo_nome text not null,
+  quantidade numeric not null default 1,
+  observacao text,
+  responsavel text,
+  criado_em timestamptz default now()
+);
+
+create index if not exists idx_desperdicios_data on desperdicios (data);
+
+alter table desperdicios enable row level security;
+
+drop policy if exists "permitir leitura anon desperdicios" on desperdicios;
+create policy "permitir leitura anon desperdicios" on desperdicios
+  for select using (true);
+
+drop policy if exists "permitir insercao anon desperdicios" on desperdicios;
+create policy "permitir insercao anon desperdicios" on desperdicios
+  for insert with check (true);
+
+-- 6.3) Alguns insumos comuns já cadastrados de largada (pode editar/apagar/adicionar pela tela depois)
+insert into insumos_desperdicio (nome)
+select nome from (values ('Limão'), ('Laranja'), ('Garrafa quebrada'), ('Gelo'), ('Hortelã')) as v(nome)
+where not exists (select 1 from insumos_desperdicio);
